@@ -1,0 +1,36 @@
+import urllib2
+from bs4 import BeautifulSoup
+from datetime import datetime
+import re
+import csv
+import os
+import sys
+
+def case(argument):
+                switcher = {
+                    'premier': 'http://www.football-data.co.uk/englandm.php',
+                    'seriea': 'http://www.football-data.co.uk/italym.php',
+                    'liga': 'http://www.football-data.co.uk/spainm.php',
+                    'bundesliga': 'http://www.football-data.co.uk/germanym.php'
+                }
+                return switcher.get(argument, "Errore")
+
+
+page = urllib2.urlopen(case(sys.argv[1]))
+soup = BeautifulSoup(page, 'html.parser')
+date = soup.find('i', text= re.compile("\d\d\/\d\d\/\d\d")).text
+print(date)
+date = datetime.strptime(date.split("	")[1], '%d/%m/%y').strftime('%d/%m/%Y')
+print(date)
+with open(sys.argv[1]+'/data/'+sys.argv[1]+'.csv', 'r') as f:
+    for row in reversed(list(csv.reader(f))):
+    	print(row[1])
+        if row[1] != date:
+            print('\n=========>\t Starting dataset '+sys.argv[1]+' update\n')
+            os.chdir('./'+sys.argv[1])
+            os.system('python predict.py > /dev/null 2>&1')
+            print('\n=========>\t Update dataset '+sys.argv[1]+' finished\n')
+            os.chdir('../')
+        else:
+            print('\n=========>\t Dataset '+sys.argv[1]+' already updated\n')
+        break
